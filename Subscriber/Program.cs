@@ -6,6 +6,7 @@ using Websocket.Client;
 
 var serviceClient = new WebPubSubServiceClient(Settings.ConnectionString, Settings.HubName);
 var url = serviceClient.GetClientAccessUri();
+
 using var client = new WebsocketClient(url, () =>
 {
     var inner = new ClientWebSocket();
@@ -13,8 +14,8 @@ using var client = new WebsocketClient(url, () =>
     return inner;
 });
 
-client.MessageReceived.Subscribe(msg => Console.WriteLine($"Message received: {msg}"));
+client.MessageReceived.Subscribe(message => Console.WriteLine($"Message received: {message}\n"));
 await client.Start();
 
-Console.WriteLine("Waiting for messages... Press a key to exit\n");
+Console.WriteLine("\nWaiting for messages... Press a key to exit\n");
 Console.ReadKey();
