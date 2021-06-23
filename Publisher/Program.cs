@@ -1,19 +1,56 @@
 ﻿using System;
+using System.Net.WebSockets;
+using System.Threading.Tasks;
 using Azure.Messaging.WebPubSub;
 using Publisher;
+using Websocket.Client;
 
-var serviceClient = new WebPubSubServiceClient(Settings.ConnectionString, Settings.HubName);
+await SendWithWebSocketAsync();
 
-do
+async Task SendWithSdkAsync()
 {
-    Console.Write("\nWrite the message to send: ");
-    var message = Console.ReadLine();
+    var serviceClient = new WebPubSubServiceClient(Settings.ConnectionString, Settings.HubName);
 
-    if (string.IsNullOrWhiteSpace(message))
+    do
     {
-        break;
-    }
+        Console.Write("\nWrite the message to send: ");
+        var message = Console.ReadLine();
 
-    await serviceClient.SendToAllAsync(message);
+        if (string.IsNullOrWhiteSpace(message))
+        {
+            break;
+        }
 
-} while (true);
+        await serviceClient.SendToAllAsync(message);
+
+    } while (true);
+}
+
+async Task SendWithWebSocketAsync()
+{
+    var serviceClient = new WebPubSubServiceClient(Settings.ConnectionString, Settings.HubName);
+    var url = serviceClient.GetClientAccessUri(roles: new string[] { "webpubsub.sendToGroup", "webpubsub.joinLeaveGroup" });
+
+    using var client = new WebsocketClient(url, () =>
+    {
+        var inner = new ClientWebSocket();
+        inner.Options.AddSubProtocol("json.webpubsub.azure.v1");
+        return inner;
+    });
+
+    await client.Start();
+
+    do
+    {
+        Console.Write("\nWrite the message to send: ");
+        var message = Console.ReadLine();
+        if (string.IsNullOrWhiteSpace(message))
+        {
+            break;
+        }
+
+        var request = WebSocketUtils.CreateSendToGroupMessage(message, null);
+        await client.SendInstant(request);
+
+    } while (true);
+}
