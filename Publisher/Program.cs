@@ -15,5 +15,6 @@ do
     }
 
     await serviceClient.SendToAllAsync(message);
+    //await serviceClient.SendToAllAsync(RequestContent.Create(new { Message = message }));
 
 } while (true);
